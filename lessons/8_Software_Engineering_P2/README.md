@@ -39,6 +39,7 @@ class TestYourCode(unittest.TestCase):
 - tox: a tool for automating test environment management and testing against multiple interpreter configurations
 - ddt: data-driven test
 - **coverage**: check the lines being tested
+  - __pytest-cov__: produces coverage reports. and works along with pytest
 - Selenium: in-browser testing
 - Jenkins, Travis: run tests all the time (Continuous Testing)
 
