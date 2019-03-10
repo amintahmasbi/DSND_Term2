@@ -256,11 +256,79 @@ The wording used in conclusions of hypothesis testing includes: **We reject the 
 **Method:** Similar to confidence intervals (where we could simulate a sampling distribution for a statistic by bootstrapping our sample data), in hypothesis testing, we could simulate a sampling distribution from the null hypothesis using characteristics that would be true if our data were to have come from the null.
 
 1. Simulate a sampling distribution for a statistic
+
+   ```python
+   # Create a sampling distribution of the difference in proportions
+   # with bootstrapping
+   diffs = []
+   size = df.shape[0]
+   for _ in range(10000):
+       b_samp = df.sample(size, replace=True)
+       control_df = b_samp.query('group == "control"')
+       experiment_df = b_samp.query('group == "experiment"')
+       control_ctr = control_df.query('action == "enroll"').count()[0] / control_df.query('action == "view"').count()[0]
+       experiment_ctr = experiment_df.query('action == "enroll"').count()[0] / experiment_df.query('action == "view"').count()[0]
+       diffs.append(experiment_ctr - control_ctr)
+   ```
+
 2. Simulate the values of your statistic that are possible from the null.
+
    1. Simulate what you would expect the sampling distribution to be if the null hypothesis is true. Using **mean** from null and **std** from sampling distribution when normal.
+
+      ```python
+      # Convert to numpy array
+      diffs = np.array(diffs)
+      # Plot sampling distribution
+      plt.hist(diffs);
+      # std of sampleing distribution
+      diffs_std = diffs.std()
+      # Simulate distribution under the null hypothesis
+      null_vals = np.random.normal(scale=diffs_std, size=10000)
+      # Plot the null distribution
+      plt.hist(null_vals);
+      # value of statistic you actually obtained in your data (next step)
+      plt.axvline(obs_diff, c='r')
+      ```
+
 3. Calculate the value of the statistic you actually obtained in your data.
+
+   ```python
+   # Get dataframe with all records from control group
+   control_df = df.query('group == "control"')
+   
+   # Compute click through rate for control group
+   control_ctr = control_df.query('action == "enroll"').count()[0] / control_df.query('action == "view"').count()[0]
+   
+   # Get dataframe with all records from experiment group
+   experiment_df = df.query('group == "experiment"')
+   
+   # Compute click through rate for experiment group
+   experiment_ctr = experiment_df.query('action == "enroll"').count()[0] / experiment_df.query('action == "view"').count()[0]
+   # Compute the observed difference in click through rates
+   obs_diff = experiment_ctr - control_ctr
+   
+   # Display observed difference
+   obs_diff
+   ```
+
 4. Compare your statistic to the values from the null. 
+
 5. Calculate p-value: the proportion of null values that are considered **extreme** based on your alternative.
+
+   1. one-sided
+
+      ```python
+      # Compute p-value
+      (null_vals > obs_diff).mean()
+      ```
+
+   2. two-sided
+
+   ```python
+   # Compute p-value
+   null_mean = 0
+   (null_vals > obs_diff).mean()+ (null_values < null_mean-(obs_diff-null_mean)).mean()
+   ```
 
 **NOTE:** When performing more than one hypothesis test, your type I error compounds. In order to correct for this, a common technique is called the **Bonferroni** correction. This correction is **very conservative**, but says that your new type I error rate should be the error rate you actually want divided by the number of tests you are performing.
 
